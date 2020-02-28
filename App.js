@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import ActionSheet from 'react-native-actionsheet';
 import ImagePicker from 'react-native-image-picker';
+import RNTesseractOcr from 'react-native-tesseract-ocr';
 
 class App extends React.Component {
   showActionSheet = () => {
@@ -24,7 +25,7 @@ class App extends React.Component {
       },
     };
     ImagePicker.launchCamera(options, response => {
-      console.log('Response = ', response);
+      //console.log('Response = ', response);
 
       if (response.didCancel) {
         console.log('User cancelled image picker');
@@ -35,12 +36,13 @@ class App extends React.Component {
         alert(response.customButton);
       } else {
         const source = {uri: response.uri};
-        console.log('response', JSON.stringify(response));
+        //.log('response', JSON.stringify(response));
         this.setState({
           filePath: response,
           fileData: response.data,
           fileUri: response.uri,
         });
+        this.serializeImage(source.uri);
       }
     });
   };
@@ -53,7 +55,7 @@ class App extends React.Component {
       },
     };
     ImagePicker.launchImageLibrary(options, response => {
-      console.log('Response = ', response);
+      //console.log('Response = ', response);
 
       if (response.didCancel) {
         console.log('User cancelled image picker');
@@ -64,15 +66,39 @@ class App extends React.Component {
         alert(response.customButton);
       } else {
         const source = {uri: response.uri};
-        console.log('response', JSON.stringify(response));
+        //console.log('response', JSON.stringify(response));
         this.setState({
           filePath: response,
           fileData: response.data,
           fileUri: response.uri,
         });
+        this.serializeImage(response.path);
       }
     });
   };
+
+  serializeImage(imgPath) {
+    const tessOptions = {
+      whitelist: null,
+      blacklist: null,
+    };
+
+    console.log("antes converter", imgPath);
+    imgPath = imgPath.replace('content://com.ocrrn.provider/root/', '');
+    console.log("depois converter", imgPath);
+
+    const lang = 'LANG_PORTUGUESE';
+    RNTesseractOcr.recognize(imgPath, lang, tessOptions)
+      .then(result => {
+        this.setState({ocrResult: result});
+        console.log('OCR Result: ', result, "fim result");
+      })
+      .catch(err => {
+        console.log('OCR Error: ', err);
+      })
+      .done();
+  }
+
   render() {
     return (
       <>
