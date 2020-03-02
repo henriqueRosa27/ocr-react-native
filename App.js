@@ -6,6 +6,7 @@ import {
   View,
   Button,
   Alert,
+  Image,
   Text,
 } from 'react-native';
 import ActionSheet from 'react-native-actionsheet';
@@ -13,6 +14,20 @@ import ImagePicker from 'react-native-image-picker';
 import RNTesseractOcr from 'react-native-tesseract-ocr';
 
 class App extends React.Component {
+  constructor(props) {
+    super(props);
+    this.launchCamera = this.launchCamera.bind(this);
+    this.launchImageLibrary = this.launchImageLibrary.bind(this);
+    this.serializeImage = this.serializeImage.bind(this);
+  }
+
+  state = {
+    sourceImage: '',
+    sourceImageToRenderize: '',
+    renderizeImageButton: false,
+    ocrResult: '',
+  };
+
   showActionSheet = () => {
     this.ActionSheet.show();
   };
@@ -37,12 +52,17 @@ class App extends React.Component {
       } else {
         const source = {uri: response.uri};
         //.log('response', JSON.stringify(response));
-        this.setState({
+        /*this.setState({
           filePath: response,
           fileData: response.data,
           fileUri: response.uri,
+        });*/
+        //this.serializeImage(source.uri);
+        this.setState({
+          sourceImage: response.uri,
+          renderizeImageButton: true,
+          sourceImageToRenderize: source.uri,
         });
-        this.serializeImage(source.uri);
       }
     });
   };
@@ -67,12 +87,17 @@ class App extends React.Component {
       } else {
         const source = {uri: response.uri};
         //console.log('response', JSON.stringify(response));
-        this.setState({
+        /*this.setState({
           filePath: response,
           fileData: response.data,
           fileUri: response.uri,
+        });*/
+        //this.serializeImage(response.path);
+        this.setState({
+          sourceImage: response.uri,
+          renderizeImageButton: true,
+          sourceImageToRenderize: response.path,
         });
-        this.serializeImage(response.path);
       }
     });
   };
@@ -83,18 +108,25 @@ class App extends React.Component {
       blacklist: null,
     };
 
-    console.log("antes converter", imgPath);
+    imgPath = this.state.sourceImageToRenderize;
+
+    console.log('antes converter', imgPath);
     imgPath = imgPath.replace('content://com.ocrrn.provider/root/', '');
-    console.log("depois converter", imgPath);
+    console.log('depois converter', imgPath);
 
     const lang = 'LANG_PORTUGUESE';
     RNTesseractOcr.recognize(imgPath, lang, tessOptions)
       .then(result => {
         this.setState({ocrResult: result});
-        console.log('OCR Result: ', result, "fim result");
+        console.log('OCR Result: ', result, 'fim result');
+        this.setState({
+          ocrResult: result,
+        });
       })
       .catch(err => {
-        console.log('OCR Error: ', err);
+        Alert.alert(
+          'Ocorreu um erro ao processar sua imagem. Por favor, verifique sua imagem e tente novamente',
+        );
       })
       .done();
   }
@@ -108,11 +140,28 @@ class App extends React.Component {
             <Button title="Carregar Foto" onPress={this.showActionSheet} />
             <View style={{backgroundColor: 'white', flex: 0.02}} />
             <Button
-              disabled={true}
+              disabled={!this.state.renderizeImageButton}
               title="Renderizar Imagem"
-              onPress={() => Alert.alert('Simple Button pressed')}
+              onPress={this.serializeImage}
             />
+            {!this.state.base64 && (
+              <Image
+                style={{width: 300, height: 300, alignSelf: 'center'}}
+                source={{
+                  uri: this.state.sourceImage,
+                }}
+              />
+            )}
+
+            {!this.state.base64 && (
+              <>
+                <View style={{backgroundColor: 'white', flex: 0.02}} />
+                <Text>Text extraido</Text>
+                <Text>{this.state.ocrResult}</Text>
+              </>
+            )}
           </View>
+
           <View>
             <ActionSheet
               ref={o => (this.ActionSheet = o)}
@@ -144,6 +193,10 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     justifyContent: 'center',
+  },
+  scrollView: {
+    backgroundColor: 'pink',
+    marginHorizontal: 20,
   },
 });
 
