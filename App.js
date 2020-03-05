@@ -26,6 +26,7 @@ class App extends React.Component {
     sourceImageToRenderize: '',
     renderizeImageButton: false,
     ocrResult: '',
+    renderText: false,
   };
 
   showActionSheet = () => {
@@ -121,6 +122,7 @@ class App extends React.Component {
         console.log('OCR Result: ', result, 'fim result');
         this.setState({
           ocrResult: result,
+          renderText: true,
         });
       })
       .catch(err => {
@@ -144,16 +146,19 @@ class App extends React.Component {
               title="Renderizar Imagem"
               onPress={this.serializeImage}
             />
-            {!this.state.base64 && (
-              <Image
-                style={{width: 300, height: 300, alignSelf: 'center'}}
-                source={{
-                  uri: this.state.sourceImage,
-                }}
-              />
+            {!this.state.renderizeImageButton ? null : (
+              <>
+                <View style={{backgroundColor: 'white', flex: 0.02}} />
+                <Image
+                  style={{width: 300, height: 300, alignSelf: 'center'}}
+                  source={{
+                    uri: this.state.sourceImage,
+                  }}
+                />
+              </>
             )}
 
-            {!this.state.base64 && (
+            {!this.state.renderText ? null : (
               <>
                 <View style={{backgroundColor: 'white', flex: 0.02}} />
                 <Text>Text extraido</Text>
